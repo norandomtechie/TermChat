@@ -105,7 +105,6 @@ else:
     ch = raw_input ("This user does not exist! Create a new ID? (Y/N): ")
     if ch == 'Y':
         passphrase, file = new_user (user_name)
-        print ('Here')
         file.write ("Message data for %s: \n" % (user_name))
         profile_data = ''
     elif ch == 'N':
