@@ -51,7 +51,7 @@ def decrypt(ciphertext, password):
 
 ###########################################################################################
 
-def new_user (user_name):
+def new_user ():
     # This function is called if the user wishes to create a new profile.
 
     passphrase = getpass.getpass ("Enter passphrase: ")
@@ -60,17 +60,14 @@ def new_user (user_name):
         passphrase = getpass.getpass ("Enter passphrase: ")
         pass
 
-    new_profile = open (user_name + '.dat', "w+")
-    return passphrase, new_profile;
+    return passphrase;
 
-def existing_user (user_name):
+def existing_user ():
     # This function is called when a data file for the given username
     # is found.
 
     passphrase = getpass.getpass ("Enter passphrase: ")
-
-    profile = open (user_name + '.dat', "r")
-    return passphrase, profile;
+    return passphrase;
 
 def start_conversation (user_name, profile_data):
     # Start a conversation with a specified user.
@@ -78,8 +75,8 @@ def start_conversation (user_name, profile_data):
     # Request which user the message should be sent to.
     recv_user = raw_input ("\nTo whom do you wish to send a message? ")
     search_string = '#### To ' + recv_user + ' ####'
+    print ('\n')
     split_data = profile_data.split ("\n")
-
     # If the user exists, display past messages, otherwise
     # add an entry to the profile_data text string.
 
@@ -94,20 +91,19 @@ def start_conversation (user_name, profile_data):
             start_index += 1
             try:
                 char_c = split_data[start_index]
-            except IndexError:
-                break
+            except IndexError:      # Since the conversation length is unknown
+                break               # we must wait for the index to go out of bounds.
             pass
 
         conversation_end_index = start_index - 1
     else:
-        # profile_data = profile_data + '\n#### To ' + recv_user + ' ####\n'
-        split_data.append ('\n#### To ' + recv_user + ' ####')
+        split_data.append ('#### To ' + recv_user + ' ####')
         start_index = len (split_data) + 1
 
     # Create a prompt that accepts messages until the
     # user enters '\q'
 
-    print ('Conversation with ' + recv_user + ': ')
+    print ('\nConversation with ' + recv_user + ': ')
     print ('Enter "\q" without quotes when you wish to exit. \n')
     line = raw_input (user_name + ">> ")
 
@@ -126,24 +122,9 @@ def start_conversation (user_name, profile_data):
             print ('Leaving conversation...\n')
         pass
 
-    profile_data = "\n".join (split_data) + "\n"
+    profile_data = "\n".join (split_data)
     print (profile_data)
     return profile_data;
-
-def open_profile (passphrase, file):
-
-    # profile_data = decrypt (file.read(), passphrase)
-    profile_data = file.read()
-    file.close()
-    return profile_data;
-
-def save_profile (passphrase, user_name, profile_data):
-    # This function encrypts the final text buffer and saves it to the file
-    # file.truncate(0)
-    file = open (user_name + '.dat', 'w+')
-    # file.write (encrypt (profile_data, passphrase))
-    file.write (profile_data)
-    return;
 
 def quit_app ():
     print ("Exiting...")
@@ -159,29 +140,32 @@ user_name = raw_input ("Enter username: ")
 ch = 'X'
 
 if os.path.isfile (user_name + '.dat') == True:
-    passphrase, file = existing_user (user_name)
-    profile_data = open_profile (passphrase, file)
+    passphrase = existing_user ()
+    file = open (user_name + '.dat', "r")
+    profile_data = decrypt (file.read(), passphrase)
+    # profile_data = file.read()
     file.close()
 else:
     ch = raw_input ("This user does not exist! Create a new ID? (Y/N): ")
     if ch == 'Y':
-        passphrase, file = new_user (user_name)
+        passphrase = new_user()
+        file = open (user_name + '.dat', "w+")
         file.write ("Message data for %s: \n" % (user_name))
-        profile_data = ''
+        profile_data = 'Message data for ' + user_name + ': \n'
+        file.close()
     elif ch == 'N':
         print ("User ID not found.\n")
         quit_app()
 
-# if profile_data:
-#     print ('\n' + profile_data)
-
 login = raw_input ("Do you wish to send a message? (Y/N): ")
 if login == 'Y':
-    open (user_name + '.dat', "w").close()
+    open (user_name + '.dat', "w").close()  ## Clears file
 
 while login == 'Y':
     profile_data = start_conversation (user_name, profile_data)
-    save_profile (passphrase, user_name, profile_data)
+    file = open (user_name + '.dat', 'w+')
+    file.write (encrypt (profile_data, passphrase))
+    # file.write (profile_data)
     login = raw_input ("Do you wish to send another message? (Y/N): ")
     pass
 
